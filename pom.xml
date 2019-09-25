@@ -65,6 +65,8 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
+			<!--跳过编译-->
+			<scope>runtime</scope>
 		</dependency>
 
 	</dependencies>
