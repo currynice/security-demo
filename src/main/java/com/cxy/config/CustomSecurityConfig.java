@@ -6,22 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import javax.servlet.ServletException;
@@ -49,12 +46,17 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
     private CustomUserDteailService customUserDteailService;
 
 
-//    @Autowired
-//    MyAccessDecisionManager myAccessDecisionManager;
-//
-//    @Autowired
-//    MyFilterInvocationSecurityMetadataSource myFilterInvocationSecurityMetadataSource;
-//
+    @Autowired
+    private MyFilterInvocationSecurityMetadataSource myFilterInvocationSecurityMetadataSource;
+
+
+    @Autowired
+    private MyAccessDecisionManager myAccessDecisionManager;
+
+    @Autowired
+    private AuthenticationEntryPoint authenticationFailureHandler;
+
+
 //    @Autowired
 //    MySecurityFilter mySecurityFilter;
 
@@ -77,15 +79,7 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(HttpSecurity http) throws Exception {
         //开启配置
         http.authorizeRequests()
-                .antMatchers("/admin/**")
-                .hasRole("ADMIN")
-                .antMatchers("/user/**")
-                .hasAnyRole("ADMIN","USER")
-                //              controller中配置
-                .antMatchers("/db/**")
-                .access("hasRole('ADMIN') and hasRole('DBA')")
-                .anyRequest()
-                .authenticated()
+            .withObjectPostProcessor(myObjectPostProcessorimplements())
                 .and()
 //                //默认表单登录页面
                 .formLogin()
@@ -111,7 +105,30 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
                 //csrf关闭
                 .csrf()
                 .disable();
+
+                http.exceptionHandling()
+                // 配置无权访问跳转页面
+                .accessDeniedHandler(noAccessDeniedHandler())
+                // 配置未登录或者token过期的跳转界面
+                .authenticationEntryPoint(authenticationFailureHandler);
     }
+
+    private AccessDeniedHandler noAccessDeniedHandler() {
+        return (request, response, e) -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("code", 301);
+            map.put("msg", "无权访问");
+            response.setContentType("application/json;charset=utf-8");
+            PrintWriter out = response.getWriter();
+            response.setStatus(301);
+            ObjectMapper om = new ObjectMapper();
+            //map->json对象
+            out.write(om.writeValueAsString(map));
+            out.flush();
+            out.close();
+        };
+    }
+
 
 
     private AuthenticationSuccessHandler successHandler(){
@@ -177,14 +194,19 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
 //          http.addFilterBefore(mySecurityFilter, UsernamePasswordAuthenticationFilter.class);
 //    }
 
-//    private class MyObjectPostProcessor implements ObjectPostProcessor<FilterSecurityInterceptor> {
-//        @Override
-//        public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
-//            fsi.setSecurityMetadataSource(myFilterInvocationSecurityMetadataSource);
-//            fsi.setAccessDecisionManager(myAccessDecisionManager);
-//            return fsi;
-//        }
-//    }
+    private  ObjectPostProcessor<FilterSecurityInterceptor> myObjectPostProcessorimplements() {
+        return  new ObjectPostProcessor<FilterSecurityInterceptor>() {
+            @Override
+            public <O extends FilterSecurityInterceptor> O postProcess(O object) {
+                object.setSecurityMetadataSource(myFilterInvocationSecurityMetadataSource);
+                object.setAccessDecisionManager(myAccessDecisionManager);
+                return object;
+            }
+        };
+    }
 
 
-}
+    }
+
+
+
