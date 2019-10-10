@@ -1,6 +1,7 @@
 package com.cxy.controller;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -29,6 +30,8 @@ public class HelloController {
     public String helloUser() {
         return "Hello,user";
     }
+
+
 
 
     @GetMapping("/db/hello")

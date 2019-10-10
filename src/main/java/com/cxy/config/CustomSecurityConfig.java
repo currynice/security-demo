@@ -1,11 +1,13 @@
 package com.cxy.config;
 
 
+import com.cxy.filter.CustomUserPasswordFilter;
 import com.cxy.userDetailService.CustomUserDteailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,6 +21,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import javax.servlet.ServletException;
@@ -71,7 +74,9 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     /**
-     * 可以form表单和httpBasic(不安全)
+     * 可以form表单
+     * 和
+     * httpBasic(不安全)
      * @param http
      * @throws Exception
      */
@@ -98,22 +103,24 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
                 .clearAuthentication(true)
                 //使Session失效
                 .invalidateHttpSession(true)
-                //退出工作//todo springsecurity定义了LogoutHandler的一些默认实现
+                //退出工作//todo springsecurity定义了LogoutHandler的一些默认实现(处理cookie,token等等....)
                 .addLogoutHandler((a,b,c)->{})
                 .logoutSuccessHandler(logoutSuccessHandler())
+                .permitAll()
                 .and()
                 //csrf关闭
                 .csrf()
-                .disable();
-
-                http.exceptionHandling()
+                .disable()
+                //异常配置
+                .exceptionHandling()
                 // 配置无权访问跳转页面
-                .accessDeniedHandler(noAccessDeniedHandler())
+                .accessDeniedHandler(accessDeniedHandler())
                 // 配置未登录或者token过期的跳转界面
                 .authenticationEntryPoint(authenticationFailureHandler);
+                http.addFilterAt(customUserPasswordFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
-    private AccessDeniedHandler noAccessDeniedHandler() {
+    private AccessDeniedHandler accessDeniedHandler() {
         return (request, response, e) -> {
             Map<String, Object> map = new HashMap<>();
             map.put("code", 301);
@@ -134,7 +141,7 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
     private AuthenticationSuccessHandler successHandler(){
         return (request,response,auth)->{
             //登录信息，不包含密码
-            Object principal = auth.getPrincipal ();
+            Object principal = auth.getPrincipal();
             response.setContentType ("application/json;charset=utf-8");
             PrintWriter out = response.getWriter();
             response.setStatus(200);
@@ -142,7 +149,7 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
             map.put ("status", 200);
             map.put ("principal", principal);
             ObjectMapper om = new ObjectMapper();
-            //map->json对象
+            //简单起见:map->json对象
             out.write(om.writeValueAsString(map));
             out.flush();
             out.close();
@@ -203,6 +210,42 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
                 return object;
             }
         };
+    }
+
+    //注册拦截器,
+    @Bean
+    public CustomUserPasswordFilter customUserPasswordFilter() throws Exception {
+        CustomUserPasswordFilter filter = new CustomUserPasswordFilter();
+        filter.setAuthenticationSuccessHandler((request,response,auth)->{
+            //登录信息，不包含密码
+            Object principal = auth.getPrincipal();
+            response.setContentType ("application/json;charset=utf-8");
+            PrintWriter out = response.getWriter();
+            response.setStatus(200);
+            Map<String, Object> map= new HashMap<>() ;
+            map.put ("status", 200);
+            map.put ("principal", principal);
+            map.put("way","json");
+            ObjectMapper om = new ObjectMapper();
+            out.write(om.writeValueAsString(map));
+            out.flush();
+            out.close();
+        });
+        filter.setAuthenticationFailureHandler((request,response,auth)-> {
+            response.setContentType("application/json;charset=utf-8");
+            PrintWriter out = response.getWriter();
+            response.setStatus(401);//认证失败
+            Map<String, Object> map = new HashMap<>();
+            map.put("status", 401);
+            map.put("msg", "登录失败");
+            map.put("way","json");
+            ObjectMapper om = new ObjectMapper();
+            out.write(om.writeValueAsString(map));
+            out.flush();
+            out.close();
+        });
+        filter.setAuthenticationManager(authenticationManagerBean());
+        return filter;
     }
 
 
