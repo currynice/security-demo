@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * 
- * @description 未登录或者token过期的跳转界面
+ * @description 未登录或者token过期的跳转界面,forward跳转而不是重定向(default)
  */
 @Component
 public class AuthenticationFailureHandler implements AuthenticationEntryPoint {

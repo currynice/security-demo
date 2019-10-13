@@ -23,6 +23,8 @@ import java.util.Map;
 @Slf4j(topic = "Logger")
 public class CustomUserPasswordFilter extends UsernamePasswordAuthenticationFilter {
 
+
+
     /**
      * 可以增加别的登录信息
      * @param request
@@ -61,4 +63,5 @@ public class CustomUserPasswordFilter extends UsernamePasswordAuthenticationFilt
                 return super.attemptAuthentication(request, response);
             }
     }
+
 }

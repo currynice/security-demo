@@ -86,9 +86,9 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests()
             .withObjectPostProcessor(myObjectPostProcessorimplements())
                 .and()
-//                //默认表单登录页面
+//                //表单登录，可以注释
                 .formLogin()
-                //发送request为/login且带参数的登录请求
+                //发送request为/login且带参数的登录请求（表单里的action）
                 .loginProcessingUrl("/login")
                 //可以处理成功/失败跳转或自定义处理逻辑
                 .successHandler(successHandler())
@@ -117,7 +117,10 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDeniedHandler(accessDeniedHandler())
                 // 配置未登录或者token过期的跳转界面
                 .authenticationEntryPoint(authenticationFailureHandler);
+        //json 登录
                 http.addFilterAt(customUserPasswordFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
     }
 
     private AccessDeniedHandler accessDeniedHandler() {
@@ -225,7 +228,6 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
             Map<String, Object> map= new HashMap<>() ;
             map.put ("status", 200);
             map.put ("principal", principal);
-            map.put("way","json");
             ObjectMapper om = new ObjectMapper();
             out.write(om.writeValueAsString(map));
             out.flush();
@@ -238,7 +240,6 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
             Map<String, Object> map = new HashMap<>();
             map.put("status", 401);
             map.put("msg", "登录失败");
-            map.put("way","json");
             ObjectMapper om = new ObjectMapper();
             out.write(om.writeValueAsString(map));
             out.flush();
@@ -247,6 +248,9 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
         filter.setAuthenticationManager(authenticationManagerBean());
         return filter;
     }
+
+
+
 
 
     }
