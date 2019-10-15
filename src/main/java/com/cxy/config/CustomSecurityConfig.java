@@ -76,7 +76,7 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * 可以form表单
      * 和
-     * httpBasic(不安全)
+     * httpBasic(不安全)basic auth
      * @param http
      * @throws Exception
      */
