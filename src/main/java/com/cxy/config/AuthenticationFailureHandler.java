@@ -16,8 +16,10 @@ import java.util.Map;
 /**
  * 
  * @description 未登录或者token过期的跳转界面,forward跳转而不是重定向(default)
+ *
+ * 避免服务端重定向，浏览器无法找到
  */
-@Component
+@Component("myAuthenticationFailureHandler")
 public class AuthenticationFailureHandler implements AuthenticationEntryPoint {
 
 	@Override

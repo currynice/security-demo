@@ -57,7 +57,7 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
     private MyAccessDecisionManager myAccessDecisionManager;
 
     @Autowired
-    private AuthenticationEntryPoint authenticationFailureHandler;
+    private AuthenticationEntryPoint myAuthenticationFailureHandler;
 
 
 //    @Autowired
@@ -116,7 +116,7 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
                 // 配置无权访问跳转页面
                 .accessDeniedHandler(accessDeniedHandler())
                 // 配置未登录或者token过期的跳转界面
-                .authenticationEntryPoint(authenticationFailureHandler);
+                .authenticationEntryPoint(myAuthenticationFailureHandler);
         //json 登录
                 http.addFilterAt(customUserPasswordFilter(), UsernamePasswordAuthenticationFilter.class);
 
