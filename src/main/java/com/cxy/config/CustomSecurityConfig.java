@@ -108,7 +108,18 @@ public class CustomSecurityConfig extends WebSecurityConfigurerAdapter {
                 .logoutSuccessHandler(logoutSuccessHandler())
                 .permitAll()
                 .and()
-                //csrf关闭
+                /**
+                 * 关闭
+                 * 开启：
+                 * 服务端生成的随机数放在 Cookie 中，前端需要从 Cookie 中自己提取出来 _csrf 参数，
+                 * 然后拼接成参数或在header传递给后端，单纯的将 Cookie 中的数据传到服务端是没用的
+                 * csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+                 *
+                 *使用：
+                 *   服务端
+                 *         let  _csrf = $.cookie('XSRF-TOKEN');
+                 *
+                 */
                 .csrf()
                 .disable()
                 //异常配置
